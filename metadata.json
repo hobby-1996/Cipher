@@ -1,0 +1,5 @@
+{
+  "name": "Cipher",
+  "description": "A modern chat application with real-time messaging and phone number registration.",
+  "requestFramePermissions": []
+}

@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - id: string (required)
+    //   - username: string (required, max 50 chars)
+    //   - email: string (required, valid email)
+    //   - public_key: string (optional)
+    //   - last_active: string (optional, ISO 8601 date string)
+    //   - created_at: string (optional, ISO 8601 date string)
+    //
+    // Collection: messages
+    // Document ID: {messageId}
+    // Fields:
+    //   - id: string (required)
+    //   - sender_id: string (required, must be 'sealed')
+    //   - receiver_id: string (required)
+    //   - content: string (required, max 100000 chars)
+    //   - ct: string (optional)
+    //   - created_at: string (required, ISO 8601 date string)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'username', 'email']) &&
+             data.id is string &&
+             data.username is string && data.username.size() > 0 && data.username.size() < 50 &&
+             isValidEmail(data.email) &&
+             (!('public_key' in data) || data.public_key is string) &&
+             (!('last_active' in data) || data.last_active is string) &&
+             (!('created_at' in data) || data.created_at is string);
+    }
+    function isValidMessage(data) {
+      return data.keys().hasAll(['id', 'sender_id', 'receiver_id', 'content', 'created_at']) &&
+             data.id is string &&
+             data.sender_id == 'sealed' &&
+             data.receiver_id is string &&
+             data.content is string && data.content.size() < 100000 &&
+             (!('ct' in data) || data.ct is string || data.ct == null) &&
+             data.created_at is string;
+    }
+
+    match /users/{userId} {
+      // Anyone authenticated can read user profiles (to get public keys)
+      allow read: if isAuthenticated();
+      // Users can only create/update/delete their own profile
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.id == userId;
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.id == userId;
+      allow delete: if isOwner(userId);
+    }
+
+    match /messages/{messageId} {
+      // Users can only read/delete messages where they are the receiver
+      allow read, delete: if isAuthenticated() && resource.data.receiver_id == request.auth.uid;
+      // Anyone authenticated can create a message for anyone (Sealed Sender)
+      allow create: if isAuthenticated() && isValidMessage(request.resource.data);
+      allow update: if false; // Messages are immutable
+    }
+  }
+}
