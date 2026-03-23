@@ -4,7 +4,7 @@ import Sidebar from './Sidebar';
 import ChatArea from './ChatArea';
 import { motion } from 'motion/react';
 import { getSharedSecret, encryptMessage, decryptMessage, encapsulateSecret, decapsulateSecret } from '../utils/encryption';
-import { Settings, Trash2, Loader2, AlertTriangle } from 'lucide-react';
+import { Settings, Trash2, Loader2, AlertTriangle, Shield } from 'lucide-react';
 import { db, auth } from '../firebase';
 import { collection, query, where, onSnapshot, getDocs, addDoc, deleteDoc, doc, orderBy, setDoc, writeBatch } from 'firebase/firestore';
 import { deleteUser } from 'firebase/auth';
@@ -332,19 +332,19 @@ export default function ChatLayout({ user, onLogout }: ChatLayoutProps) {
   };
 
   return (
-    <div className="flex flex-col h-full w-full relative overflow-hidden">
+    <div className="flex flex-col h-full w-full relative overflow-hidden bg-bg-soothing">
       {isOffline && (
-        <div className="w-full bg-amber-500 text-white text-xs font-medium py-1.5 px-4 text-center flex items-center justify-center z-50">
+        <div className="w-full bg-amber-50 text-amber-800 text-[10px] font-bold uppercase tracking-widest py-2 px-4 text-center flex items-center justify-center z-50 border-b border-amber-100">
           <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414" />
           </svg>
-          You are currently offline. Messages will be sent when you reconnect.
+          Offline Mode • Messages will sync when reconnected
         </div>
       )}
       <div className="flex flex-1 h-full w-full relative overflow-hidden">
         {/* Sidebar */}
         <motion.div 
-          className={`absolute lg:relative z-20 h-full w-full lg:w-80 border-r border-slate-200 bg-white flex flex-col transition-transform duration-300 ease-in-out ${
+          className={`absolute lg:relative z-20 h-full w-full lg:w-96 border-r border-secondary-blue/30 bg-white flex flex-col transition-transform duration-500 ease-in-out ${
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           }`}
         >
@@ -361,7 +361,7 @@ export default function ChatLayout({ user, onLogout }: ChatLayoutProps) {
         </motion.div>
 
         {/* Main Chat Area */}
-        <div className="flex-1 h-full bg-slate-50 flex flex-col relative z-10 w-full">
+        <div className="flex-1 h-full bg-bg-soothing flex flex-col relative z-10 w-full">
           {activeConversation ? (
             <ChatArea 
               user={user}
@@ -373,31 +373,31 @@ export default function ChatLayout({ user, onLogout }: ChatLayoutProps) {
               onOpenSettings={() => setShowSettings(true)}
             />
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8 text-center relative">
-              <div className="absolute top-4 right-4">
+            <div className="flex-1 flex flex-col items-center justify-center text-text-muted p-10 text-center relative">
+              <div className="absolute top-6 right-6">
                 <button 
                   onClick={() => setShowSettings(true)}
-                  className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors"
+                  className="p-3 text-text-muted hover:text-primary-navy hover:bg-white rounded-2xl transition-all shadow-sm border border-transparent hover:border-secondary-blue/30"
                   title="Settings"
                 >
-                  <Settings className="w-5 h-5" />
+                  <Settings className="w-6 h-6" />
                 </button>
               </div>
-              <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6">
-                <svg className="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-28 h-28 bg-white rounded-[2.5rem] flex items-center justify-center mb-8 shadow-[0_4px_20px_rgb(0,0,0,0.02)] border border-secondary-blue/20">
+                <svg className="w-12 h-12 text-secondary-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-medium text-slate-600 mb-2">No conversation selected</h3>
-              <p className="max-w-sm">
-                Select a conversation from the sidebar or search for a user's email to start chatting.
+              <h3 className="text-2xl font-semibold text-primary-navy mb-3">Your Safe Space</h3>
+              <p className="max-w-xs text-sm leading-relaxed font-medium">
+                Select a conversation to start sharing. Your messages are protected by post-quantum encryption.
               </p>
               {/* Mobile open sidebar button */}
               <button 
                 onClick={() => setIsSidebarOpen(true)}
-                className="mt-6 lg:hidden px-6 py-2 bg-indigo-600 text-white rounded-full font-medium shadow-sm hover:bg-indigo-700 transition-colors"
+                className="mt-8 lg:hidden px-8 py-3 bg-primary-navy text-white rounded-2xl font-semibold shadow-md hover:bg-primary-navy/90 transition-all active:scale-95"
               >
-                View Contacts
+                Open Contacts
               </button>
             </div>
           )}
@@ -406,122 +406,108 @@ export default function ChatLayout({ user, onLogout }: ChatLayoutProps) {
 
       {/* Settings Modal */}
       {showSettings && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-primary-navy/10 backdrop-blur-md p-4">
           <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+            initial={{ opacity: 0, scale: 0.98, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-secondary-blue/30"
           >
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900">Settings</h3>
+            <div className="p-6 border-b border-secondary-blue/20 flex items-center justify-between bg-white">
+              <h3 className="text-xl font-semibold text-primary-navy">Settings</h3>
               <button 
                 onClick={() => setShowSettings(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="p-2 text-text-muted hover:text-primary-navy hover:bg-bg-soothing rounded-xl transition-all"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            <div className="p-6 space-y-6">
+            <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
               <div>
-                <h4 className="text-sm font-medium text-slate-900 mb-2">Account Details</h4>
-                <div className="bg-slate-50 p-4 rounded-xl space-y-3">
-                  <div>
-                    <p className="text-xs text-slate-500">Username</p>
-                    <p className="font-medium text-slate-900">{user.username}</p>
+                <h4 className="text-xs font-bold text-text-muted uppercase tracking-widest mb-4">Account Profile</h4>
+                <div className="bg-bg-soothing p-6 rounded-2xl space-y-4 border border-secondary-blue/30">
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs font-bold text-text-muted uppercase tracking-wider">Username</p>
+                    <p className="font-semibold text-primary-navy">{user.username}</p>
                   </div>
-                  <div>
-                    <p className="text-xs text-slate-500">Email</p>
-                    <p className="font-mono font-medium text-slate-900">{user.email}</p>
+                  <div className="h-px bg-secondary-blue/30 w-full"></div>
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs font-bold text-text-muted uppercase tracking-wider">Secure Email</p>
+                    <p className="font-medium text-primary-navy/80">{user.email}</p>
                   </div>
                 </div>
               </div>
               
               <div>
-                <h4 className="text-sm font-medium text-slate-900 mb-2">Security</h4>
-                <div className="bg-emerald-50 p-4 rounded-xl flex items-start space-x-3 border border-emerald-100">
-                  <div className="mt-0.5">
-                    <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
+                <h4 className="text-xs font-bold text-text-muted uppercase tracking-widest mb-4">Privacy & Security</h4>
+                <div className="bg-emerald-50/50 p-6 rounded-2xl flex items-start space-x-4 border border-emerald-100">
+                  <div className="mt-1">
+                    <Shield className="w-6 h-6 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-emerald-900">Post-Quantum Encryption</p>
-                    <p className="text-xs text-emerald-700 mt-1">
-                      Your messages are secured with CRYSTALS-Kyber Post-Quantum Cryptography and AES encryption.
+                    <p className="text-sm font-bold text-emerald-900">Post-Quantum Protection Active</p>
+                    <p className="text-xs text-emerald-700/80 mt-1.5 leading-relaxed font-medium">
+                      Your conversations are shielded with CRYSTALS-Kyber (PQC) and AES-256. This ensures your data remains private even against future quantum computers.
                     </p>
                   </div>
                 </div>
               </div>
+
               <div>
-                <h4 className="text-sm font-medium text-slate-900 mb-2">Network Routing</h4>
-                <div className="bg-slate-50 p-4 rounded-xl space-y-3 border border-slate-100">
+                <h4 className="text-xs font-bold text-text-muted uppercase tracking-widest mb-4">Advanced Preferences</h4>
+                <div className="bg-bg-soothing p-6 rounded-2xl space-y-5 border border-secondary-blue/30">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-slate-900">Tor Network (Onion Routing)</p>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Route traffic through multiple nodes to hide your IP address.
+                      <p className="text-sm font-bold text-primary-navy">Onion Routing (Tor)</p>
+                      <p className="text-xs text-text-muted mt-1 font-medium">
+                        Mask your digital footprint via multi-node routing.
                       </p>
                     </div>
                     <button 
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${useTor ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                      className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all ${useTor ? 'bg-primary-navy' : 'bg-text-muted/30'}`}
                       onClick={() => setUseTor(!useTor)}
                     >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${useTor ? 'translate-x-6' : 'translate-x-1'}`} />
+                      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${useTor ? 'translate-x-6' : 'translate-x-1'}`} />
                     </button>
                   </div>
                   {useTor && (
-                    <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-100 flex items-start space-x-2">
-                      <svg className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                      <p className="text-xs text-amber-800">
-                        To completely hide your IP address from our servers, you must access Cipher using the Tor Browser. Web browsers cannot hide your IP natively.
+                    <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-100 flex items-start space-x-3">
+                      <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                      <p className="text-[11px] text-amber-800 leading-relaxed font-medium">
+                        Note: For complete IP anonymity, please use the Tor Browser. Standard browsers cannot fully mask your network identity.
                       </p>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div>
-                <h4 className="text-sm font-medium text-red-600 mb-2">Danger Zone</h4>
-                <div className="bg-red-50 p-4 rounded-xl border border-red-100">
-                  <div className="flex items-start space-x-3 mb-4">
-                    <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-red-900">Permanently Delete Account</p>
-                      <p className="text-xs text-red-700 mt-1">
-                        This action cannot be undone. All your messages, keys, and account data will be wiped from our servers.
-                      </p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={handleDeleteAccount}
-                    disabled={isDeleting}
-                    className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center space-x-2"
-                  >
-                    {isDeleting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Deleting...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 className="w-4 h-4" />
-                        <span>Delete My Account Permanently</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+              <div className="pt-4">
+                <button 
+                  onClick={handleDeleteAccount}
+                  disabled={isDeleting}
+                  className="w-full py-4 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl text-xs font-bold tracking-widest uppercase transition-all disabled:opacity-50 flex items-center justify-center space-x-3 border border-red-100"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete Account Permanently</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+            <div className="p-6 border-t border-secondary-blue/20 bg-bg-soothing flex justify-end">
               <button 
                 onClick={() => setShowSettings(false)}
-                className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-300 transition-colors"
+                className="px-8 py-3 bg-white text-primary-navy border border-secondary-blue/50 rounded-xl text-sm font-bold hover:bg-secondary-blue/20 transition-all shadow-sm"
               >
-                Close
+                Done
               </button>
             </div>
           </motion.div>

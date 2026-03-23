@@ -93,29 +93,29 @@ export default function Sidebar({
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-white border-r border-slate-200">
+    <div className="flex flex-col h-full w-full bg-white border-r border-secondary-blue/30">
       {/* Header */}
-      <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-sm">
-            <MessageSquare className="w-5 h-5 text-white" />
+      <div className="p-6 border-b border-secondary-blue/20 flex items-center justify-between bg-white">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-2xl bg-primary-navy flex items-center justify-center shadow-sm">
+            <MessageSquare className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="font-bold text-slate-900 leading-tight tracking-tight">Cipher</h2>
-            <p className="text-xs text-slate-500 font-medium truncate max-w-[100px]">{user.username}</p>
+            <h2 className="font-semibold text-primary-navy leading-tight tracking-tight text-lg">Cipher</h2>
+            <p className="text-xs text-text-muted font-medium truncate max-w-[120px]">{user.username}</p>
           </div>
         </div>
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-2">
           <button
             onClick={onOpenSettings}
-            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors"
+            className="p-2.5 text-text-muted hover:text-primary-navy hover:bg-secondary-blue/50 rounded-xl transition-all"
             title="Settings"
           >
             <Settings className="w-5 h-5" />
           </button>
           <button
             onClick={onLogout}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+            className="p-2.5 text-text-muted hover:text-primary-navy hover:bg-secondary-blue/50 rounded-xl transition-all"
             title="Logout"
           >
             <LogOut className="w-5 h-5" />
@@ -124,15 +124,15 @@ export default function Sidebar({
       </div>
 
       {/* Search */}
-      <div className="p-4 border-b border-slate-100">
+      <div className="p-6">
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-slate-400" />
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 text-text-muted" />
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-slate-50 focus:bg-white transition-colors outline-none placeholder-slate-400"
-            placeholder="Search email..."
+            className="block w-full pl-11 pr-4 py-3 border border-secondary-blue/50 rounded-2xl text-sm focus:ring-2 focus:ring-primary-navy/5 focus:border-primary-navy bg-bg-soothing transition-all outline-none placeholder-text-muted"
+            placeholder="Search contacts..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -140,14 +140,14 @@ export default function Sidebar({
       </div>
 
       {/* Conversation List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto px-3 pb-6">
         {searchQuery.trim() ? (
-          <div className="p-2">
-            <h3 className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="space-y-2">
+            <h3 className="px-4 py-2 text-[10px] font-bold text-text-muted uppercase tracking-widest">
               Search Results
             </h3>
             {isSearching ? (
-              <div className="p-4 text-center text-sm text-slate-500">Searching...</div>
+              <div className="p-4 text-center text-sm text-text-muted">Searching...</div>
             ) : searchResults.length > 0 ? (
               searchResults.map((resultUser) => (
                 <button
@@ -156,29 +156,29 @@ export default function Sidebar({
                     onStartConversation(resultUser);
                     setSearchQuery('');
                   }}
-                  className="w-full text-left p-3 flex items-center space-x-3 hover:bg-slate-50 rounded-xl transition-colors mb-1"
+                  className="w-full text-left p-4 flex items-center space-x-4 hover:bg-bg-soothing rounded-2xl transition-all mb-1"
                 >
-                  <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-medium">
+                  <div className="w-11 h-11 rounded-2xl bg-secondary-blue flex items-center justify-center text-primary-navy font-semibold">
                     {resultUser.username.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900 truncate">
+                    <p className="text-sm font-semibold text-primary-navy truncate">
                       {resultUser.username}
                     </p>
-                    <p className="text-xs text-slate-500 font-mono truncate">
+                    <p className="text-xs text-text-muted font-medium truncate">
                       {resultUser.email}
                     </p>
                   </div>
                 </button>
               ))
             ) : (
-              <div className="p-4 text-center text-sm text-slate-500">No users found</div>
+              <div className="p-4 text-center text-sm text-text-muted">No users found</div>
             )}
           </div>
         ) : (
-          <div className="p-2">
-            <h3 className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Recent Chats
+          <div className="space-y-2">
+            <h3 className="px-4 py-2 text-[10px] font-bold text-text-muted uppercase tracking-widest">
+              Recent Conversations
             </h3>
             {conversations.length > 0 ? (
               conversations.map((conv) => (
@@ -192,64 +192,64 @@ export default function Sidebar({
                     onMouseLeave={handleTouchEnd}
                     onTouchStart={() => handleTouchStart(conv.id)}
                     onTouchEnd={handleTouchEnd}
-                    className={`w-full text-left p-3 flex items-center space-x-3 rounded-xl transition-colors mb-1 ${
+                    className={`w-full text-left p-4 flex items-center space-x-4 rounded-2xl transition-all mb-1 ${
                       activeConversation?.id === conv.id
-                        ? 'bg-indigo-50 border border-indigo-100'
-                        : 'hover:bg-slate-50 border border-transparent'
+                        ? 'bg-secondary-blue/50 border border-secondary-blue'
+                        : 'hover:bg-bg-soothing border border-transparent'
                     }`}
                   >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-medium shrink-0 ${
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-semibold shrink-0 transition-all ${
                       activeConversation?.id === conv.id
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-200 text-slate-600'
+                        ? 'bg-primary-navy text-white shadow-sm'
+                        : 'bg-secondary-blue text-primary-navy'
                     }`}>
                       {conv.username.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-baseline mb-1">
-                        <p className={`text-sm font-medium truncate ${
-                          activeConversation?.id === conv.id ? 'text-indigo-900' : 'text-slate-900'
+                        <p className={`text-sm font-semibold truncate ${
+                          activeConversation?.id === conv.id ? 'text-primary-navy' : 'text-text-main'
                         }`}>
                           {conv.username}
                         </p>
                         {conv.last_message_time && (
-                          <p className="text-xs text-slate-400 shrink-0 ml-2">
+                          <p className="text-[10px] text-text-muted font-medium shrink-0 ml-2">
                             {formatDistanceToNow(new Date(conv.last_message_time), { addSuffix: true })}
                           </p>
                         )}
                       </div>
-                      <p className={`text-sm truncate ${
-                        activeConversation?.id === conv.id ? 'text-indigo-700/80' : 'text-slate-500'
+                      <p className={`text-xs truncate font-medium ${
+                        activeConversation?.id === conv.id ? 'text-primary-navy/70' : 'text-text-muted'
                       }`}>
-                        {conv.last_message || 'No messages yet'}
+                        {conv.last_message || 'Start a conversation'}
                       </p>
                     </div>
                   </button>
 
                   {showDeleteMenu === conv.id && (
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 z-20">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           onDeleteConversation(conv.id);
                           setShowDeleteMenu(null);
                         }}
-                        className="bg-red-600 text-white p-2 rounded-lg shadow-lg flex items-center space-x-1 hover:bg-red-700 transition-colors"
+                        className="bg-red-500 text-white p-2.5 rounded-xl shadow-lg flex items-center space-x-2 hover:bg-red-600 transition-all"
                       >
                         <Trash2 className="w-4 h-4" />
-                        <span className="text-xs font-bold">Delete Chat</span>
+                        <span className="text-xs font-bold">Delete</span>
                       </button>
                     </div>
                   )}
                 </div>
               ))
             ) : (
-              <div className="p-8 text-center flex flex-col items-center">
-                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3">
-                  <MessageSquare className="w-6 h-6 text-slate-300" />
+              <div className="p-10 text-center flex flex-col items-center">
+                <div className="w-16 h-16 bg-bg-soothing rounded-3xl flex items-center justify-center mb-4">
+                  <MessageSquare className="w-8 h-8 text-secondary-blue" />
                 </div>
-                <p className="text-sm text-slate-500">No conversations yet.</p>
-                <p className="text-xs text-slate-400 mt-1">Search for a user to start chatting.</p>
+                <p className="text-sm text-text-muted font-medium">Your inbox is empty.</p>
+                <p className="text-xs text-text-muted/70 mt-1">Find a friend to start chatting.</p>
               </div>
             )}
           </div>
