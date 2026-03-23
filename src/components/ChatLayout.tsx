@@ -332,7 +332,7 @@ export default function ChatLayout({ user, onLogout }: ChatLayoutProps) {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full relative overflow-hidden bg-white">
+    <div className="flex flex-col h-full w-full relative overflow-hidden">
       {isOffline && (
         <div className="w-full bg-amber-500 text-white text-xs font-medium py-1.5 px-4 text-center flex items-center justify-center z-50">
           <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -342,17 +342,9 @@ export default function ChatLayout({ user, onLogout }: ChatLayoutProps) {
         </div>
       )}
       <div className="flex flex-1 h-full w-full relative overflow-hidden">
-        {/* Sidebar Backdrop for Mobile */}
-        {isSidebarOpen && (
-          <div 
-            className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-30 transition-opacity duration-300"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
-
         {/* Sidebar */}
         <motion.div 
-          className={`fixed lg:relative z-40 h-full w-[85%] sm:w-80 border-r border-slate-200 bg-white flex flex-col transition-transform duration-300 ease-in-out ${
+          className={`absolute lg:relative z-20 h-full w-full lg:w-80 border-r border-slate-200 bg-white flex flex-col transition-transform duration-300 ease-in-out ${
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           }`}
         >
@@ -365,7 +357,6 @@ export default function ChatLayout({ user, onLogout }: ChatLayoutProps) {
             onLogout={onLogout}
             onOpenSettings={() => setShowSettings(true)}
             onDeleteConversation={handleDeleteConversation}
-            onClose={() => setIsSidebarOpen(false)}
           />
         </motion.div>
 

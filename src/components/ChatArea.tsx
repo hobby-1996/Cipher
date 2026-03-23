@@ -65,24 +65,24 @@ export default function ChatArea({
   return (
     <div className="flex flex-col h-full w-full bg-slate-50 relative z-10">
       {/* Header */}
-      <div className="h-14 sm:h-16 border-b border-slate-200 bg-white flex items-center justify-between px-3 sm:px-6 shrink-0 shadow-sm z-20">
-        <div className="flex items-center space-x-3 sm:space-x-4">
+      <div className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-4 sm:px-6 shrink-0 shadow-sm z-20">
+        <div className="flex items-center space-x-4">
           <button
             onClick={onBack}
-            className="lg:hidden p-2 -ml-1 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
+            className="lg:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="relative">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-base sm:text-lg shadow-inner">
+            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg shadow-inner">
               {conversation.username.charAt(0).toUpperCase()}
             </div>
-            <div className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-emerald-500 border-2 border-white rounded-full"></div>
+            <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></div>
           </div>
-          <div className="min-w-0">
-            <h2 className="font-semibold text-slate-900 leading-tight truncate text-sm sm:text-base">{conversation.username}</h2>
-            <p className="text-[10px] sm:text-xs text-slate-500 font-mono flex items-center">
-              <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-emerald-500 rounded-full mr-1 sm:mr-1.5"></span>
+          <div>
+            <h2 className="font-semibold text-slate-900 leading-tight">{conversation.username}</h2>
+            <p className="text-xs text-slate-500 font-mono flex items-center">
+              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5"></span>
               Online
             </p>
           </div>
@@ -144,13 +144,13 @@ export default function ChatArea({
                   )}
 
                   <div
-                    className={`max-w-[85%] sm:max-w-[65%] rounded-2xl px-3.5 py-2 sm:px-4 sm:py-2.5 shadow-sm ${
+                    className={`max-w-[75%] sm:max-w-[65%] rounded-2xl px-4 py-2.5 shadow-sm ${
                       isMine
                         ? 'bg-indigo-600 text-white rounded-br-sm'
                         : 'bg-white text-slate-800 border border-slate-100 rounded-bl-sm'
                     }`}
                   >
-                    <p className="text-sm sm:text-[15px] leading-relaxed break-words">{msg.content}</p>
+                    <p className="text-[15px] leading-relaxed break-words">{msg.content}</p>
                     <div
                       className={`text-[10px] mt-1 flex items-center justify-end ${
                         isMine ? 'text-indigo-200' : 'text-slate-400'
@@ -183,12 +183,12 @@ export default function ChatArea({
       </div>
 
       {/* Input Area */}
-      <div className="p-3 sm:p-4 bg-white border-t border-slate-200 shrink-0 pb-safe">
+      <div className="p-4 bg-white border-t border-slate-200 shrink-0">
         <form
           onSubmit={handleSubmit}
           className="flex items-end space-x-2 max-w-4xl mx-auto"
         >
-          <div className="flex items-center space-x-1 sm:space-x-2 text-slate-400 pb-1.5 sm:pb-2">
+          <div className="flex items-center space-x-1 sm:space-x-2 text-slate-400 pb-2">
             <button type="button" className="p-2 hover:bg-slate-100 hover:text-slate-600 rounded-full transition-colors hidden sm:block">
               <Paperclip className="w-5 h-5" />
             </button>
@@ -204,9 +204,9 @@ export default function ChatArea({
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
-              className="w-full bg-transparent border-none py-2.5 sm:py-3 pl-4 pr-10 sm:pr-12 focus:ring-0 text-slate-900 placeholder-slate-400 outline-none text-sm sm:text-base"
+              className="w-full bg-transparent border-none py-3 pl-4 pr-12 focus:ring-0 text-slate-900 placeholder-slate-400 outline-none"
             />
-            <button type="button" className="absolute right-1.5 bottom-1.5 sm:right-2 sm:bottom-2 p-1.5 text-slate-400 hover:text-slate-600 rounded-full transition-colors">
+            <button type="button" className="absolute right-2 bottom-2 p-1.5 text-slate-400 hover:text-slate-600 rounded-full transition-colors">
               <Smile className="w-5 h-5" />
             </button>
           </div>
@@ -214,7 +214,7 @@ export default function ChatArea({
           <button
             type="submit"
             disabled={!newMessage.trim()}
-            className="p-2.5 sm:p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex-shrink-0"
+            className="p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex-shrink-0"
           >
             <Send className="w-5 h-5 ml-0.5" />
           </button>

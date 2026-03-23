@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { User, Conversation } from '../types';
-import { Search, LogOut, MessageSquare, User as UserIcon, Settings, Trash2, Download } from 'lucide-react';
+import { Search, LogOut, MessageSquare, User as UserIcon, Settings, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { db } from '../firebase';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { usePWAInstall } from '../hooks/usePWAInstall';
 
 interface SidebarProps {
   user: User;
@@ -15,7 +14,6 @@ interface SidebarProps {
   onLogout: () => void;
   onOpenSettings: () => void;
   onDeleteConversation: (conversationId: string) => void;
-  onClose?: () => void;
 }
 
 export default function Sidebar({
@@ -27,9 +25,7 @@ export default function Sidebar({
   onLogout,
   onOpenSettings,
   onDeleteConversation,
-  onClose,
 }: SidebarProps) {
-  const { isInstallable, install } = usePWAInstall();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -97,9 +93,9 @@ export default function Sidebar({
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-white border-r border-slate-200 pt-safe">
+    <div className="flex flex-col h-full w-full bg-white border-r border-slate-200">
       {/* Header */}
-      <div className="p-3 sm:p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+      <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-sm">
             <MessageSquare className="w-5 h-5 text-white" />
@@ -110,15 +106,6 @@ export default function Sidebar({
           </div>
         </div>
         <div className="flex items-center space-x-1">
-          {isInstallable && (
-            <button
-              onClick={install}
-              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors"
-              title="Install App"
-            >
-              <Download className="w-5 h-5" />
-            </button>
-          )}
           <button
             onClick={onOpenSettings}
             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors"
@@ -126,17 +113,6 @@ export default function Sidebar({
           >
             <Settings className="w-5 h-5" />
           </button>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="lg:hidden p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-              title="Close Sidebar"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          )}
           <button
             onClick={onLogout}
             className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
@@ -148,14 +124,14 @@ export default function Sidebar({
       </div>
 
       {/* Search */}
-      <div className="p-3 sm:p-4 border-b border-slate-100">
+      <div className="p-4 border-b border-slate-100">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-slate-400" />
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-3 py-2.5 sm:py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-slate-50 focus:bg-white transition-colors outline-none placeholder-slate-400"
+            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-slate-50 focus:bg-white transition-colors outline-none placeholder-slate-400"
             placeholder="Search email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
