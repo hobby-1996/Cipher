@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { User, Conversation } from '../types';
-import { Search, LogOut, MessageSquare, User as UserIcon, Settings } from 'lucide-react';
+import { Search, LogOut, MessageSquare, User as UserIcon, Settings, Trash2, Download } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { db } from '../firebase';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 interface SidebarProps {
   user: User;
@@ -13,6 +14,8 @@ interface SidebarProps {
   onStartConversation: (user: User) => void;
   onLogout: () => void;
   onOpenSettings: () => void;
+  onDeleteConversation: (conversationId: string) => void;
+  onClose?: () => void;
 }
 
 export default function Sidebar({
@@ -23,10 +26,35 @@ export default function Sidebar({
   onStartConversation,
   onLogout,
   onOpenSettings,
+  onDeleteConversation,
+  onClose,
 }: SidebarProps) {
+  const { isInstallable, install } = usePWAInstall();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [showDeleteMenu, setShowDeleteMenu] = useState<string | null>(null);
+
+  const handleTouchStart = (convId: string) => {
+    const timer = setTimeout(() => {
+      setShowDeleteMenu(convId);
+    }, 700); // 700ms for long press
+    setLongPressTimer(timer);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = () => setShowDeleteMenu(null);
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -69,9 +97,9 @@ export default function Sidebar({
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-white border-r border-slate-200">
+    <div className="flex flex-col h-full w-full bg-white border-r border-slate-200 pt-safe">
       {/* Header */}
-      <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+      <div className="p-3 sm:p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-sm">
             <MessageSquare className="w-5 h-5 text-white" />
@@ -82,6 +110,15 @@ export default function Sidebar({
           </div>
         </div>
         <div className="flex items-center space-x-1">
+          {isInstallable && (
+            <button
+              onClick={install}
+              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors"
+              title="Install App"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+          )}
           <button
             onClick={onOpenSettings}
             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors"
@@ -89,6 +126,17 @@ export default function Sidebar({
           >
             <Settings className="w-5 h-5" />
           </button>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="lg:hidden p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+              title="Close Sidebar"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
           <button
             onClick={onLogout}
             className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
@@ -100,14 +148,14 @@ export default function Sidebar({
       </div>
 
       {/* Search */}
-      <div className="p-4 border-b border-slate-100">
+      <div className="p-3 sm:p-4 border-b border-slate-100">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-slate-400" />
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-slate-50 focus:bg-white transition-colors outline-none placeholder-slate-400"
+            className="block w-full pl-10 pr-3 py-2.5 sm:py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-slate-50 focus:bg-white transition-colors outline-none placeholder-slate-400"
             placeholder="Search email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -158,42 +206,66 @@ export default function Sidebar({
             </h3>
             {conversations.length > 0 ? (
               conversations.map((conv) => (
-                <button
-                  key={conv.id}
-                  onClick={() => onSelectConversation(conv)}
-                  className={`w-full text-left p-3 flex items-center space-x-3 rounded-xl transition-colors mb-1 ${
-                    activeConversation?.id === conv.id
-                      ? 'bg-indigo-50 border border-indigo-100'
-                      : 'hover:bg-slate-50 border border-transparent'
-                  }`}
-                >
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-medium shrink-0 ${
-                    activeConversation?.id === conv.id
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-200 text-slate-600'
-                  }`}>
-                    {conv.username.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-baseline mb-1">
-                      <p className={`text-sm font-medium truncate ${
-                        activeConversation?.id === conv.id ? 'text-indigo-900' : 'text-slate-900'
-                      }`}>
-                        {conv.username}
-                      </p>
-                      {conv.last_message_time && (
-                        <p className="text-xs text-slate-400 shrink-0 ml-2">
-                          {formatDistanceToNow(new Date(conv.last_message_time), { addSuffix: true })}
-                        </p>
-                      )}
-                    </div>
-                    <p className={`text-sm truncate ${
-                      activeConversation?.id === conv.id ? 'text-indigo-700/80' : 'text-slate-500'
+                <div key={conv.id} className="relative group">
+                  <button
+                    onClick={() => {
+                      if (!showDeleteMenu) onSelectConversation(conv);
+                    }}
+                    onMouseDown={() => handleTouchStart(conv.id)}
+                    onMouseUp={handleTouchEnd}
+                    onMouseLeave={handleTouchEnd}
+                    onTouchStart={() => handleTouchStart(conv.id)}
+                    onTouchEnd={handleTouchEnd}
+                    className={`w-full text-left p-3 flex items-center space-x-3 rounded-xl transition-colors mb-1 ${
+                      activeConversation?.id === conv.id
+                        ? 'bg-indigo-50 border border-indigo-100'
+                        : 'hover:bg-slate-50 border border-transparent'
+                    }`}
+                  >
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-medium shrink-0 ${
+                      activeConversation?.id === conv.id
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-slate-200 text-slate-600'
                     }`}>
-                      {conv.last_message || 'No messages yet'}
-                    </p>
-                  </div>
-                </button>
+                      {conv.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-baseline mb-1">
+                        <p className={`text-sm font-medium truncate ${
+                          activeConversation?.id === conv.id ? 'text-indigo-900' : 'text-slate-900'
+                        }`}>
+                          {conv.username}
+                        </p>
+                        {conv.last_message_time && (
+                          <p className="text-xs text-slate-400 shrink-0 ml-2">
+                            {formatDistanceToNow(new Date(conv.last_message_time), { addSuffix: true })}
+                          </p>
+                        )}
+                      </div>
+                      <p className={`text-sm truncate ${
+                        activeConversation?.id === conv.id ? 'text-indigo-700/80' : 'text-slate-500'
+                      }`}>
+                        {conv.last_message || 'No messages yet'}
+                      </p>
+                    </div>
+                  </button>
+
+                  {showDeleteMenu === conv.id && (
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 z-20">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteConversation(conv.id);
+                          setShowDeleteMenu(null);
+                        }}
+                        className="bg-red-600 text-white p-2 rounded-lg shadow-lg flex items-center space-x-1 hover:bg-red-700 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span className="text-xs font-bold">Delete Chat</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               ))
             ) : (
               <div className="p-8 text-center flex flex-col items-center">

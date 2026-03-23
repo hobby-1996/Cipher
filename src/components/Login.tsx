@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { MessageSquare, Loader2, Shield, Lock, EyeOff, Globe, Smartphone, Key } from 'lucide-react';
+import { MessageSquare, Loader2, Shield, Lock, EyeOff, Globe, Smartphone, Key, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth, db } from '../firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 export default function Login() {
+  const { isInstallable, install } = usePWAInstall();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [phone, setPhone] = useState('');
@@ -116,25 +118,25 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#0a0a0a] flex items-center justify-center p-4 font-sans text-white overflow-hidden relative">
+    <div className="min-h-[100dvh] w-full bg-[#0a0a0a] flex items-center justify-center p-4 font-sans text-white overflow-hidden relative pt-safe pb-safe">
       {/* Background Glow */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-900/10 blur-[120px] rounded-full"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-900/10 blur-[120px] rounded-full"></div>
+      <div className="absolute top-[-5%] left-[-5%] w-[50%] h-[50%] bg-indigo-900/10 blur-[80px] sm:blur-[120px] rounded-full"></div>
+      <div className="absolute bottom-[-5%] right-[-5%] w-[50%] h-[50%] bg-purple-900/10 blur-[80px] sm:blur-[120px] rounded-full"></div>
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full relative z-10"
+        className="max-w-md w-full relative z-10 px-2 sm:px-0"
       >
-        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-8 rounded-[2.5rem] shadow-2xl space-y-8">
+        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl space-y-6 sm:space-y-8">
           {/* Compact Branding */}
-          <div className="text-center space-y-3">
-            <div className="inline-flex h-14 w-14 bg-indigo-600 rounded-2xl items-center justify-center shadow-lg shadow-indigo-500/20 mx-auto">
-              <MessageSquare className="h-7 w-7 text-white" />
+          <div className="text-center space-y-2 sm:space-y-3">
+            <div className="inline-flex h-12 w-12 sm:h-14 sm:w-14 bg-indigo-600 rounded-2xl items-center justify-center shadow-lg shadow-indigo-500/20 mx-auto">
+              <MessageSquare className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
             </div>
-            <div className="space-y-1">
-              <h1 className="text-3xl font-bold tracking-tighter text-white">CIPHER</h1>
-              <p className="text-slate-400 text-sm">Post-Quantum Secure Messaging</p>
+            <div className="space-y-0.5 sm:space-y-1">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tighter text-white uppercase">CIPHER</h1>
+              <p className="text-slate-400 text-[10px] sm:text-sm">Post-Quantum Secure Messaging</p>
             </div>
           </div>
 
@@ -153,15 +155,15 @@ export default function Login() {
                 </p>
               </div>
 
-              <form onSubmit={handlePhoneAuth} className="space-y-4">
+              <form onSubmit={handlePhoneAuth} className="space-y-3 sm:space-y-4">
                 {error && (
-                  <div className="p-3 bg-red-500/10 text-red-400 text-xs rounded-xl border border-red-500/20 text-center">
+                  <div className="p-3 bg-red-500/10 text-red-400 text-[10px] sm:text-xs rounded-xl border border-red-500/20 text-center">
                     {error}
                   </div>
                 )}
 
                 {!isRegistering && (
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <div className="relative">
                       <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                       <input 
@@ -169,13 +171,13 @@ export default function Login() {
                         placeholder="94190XXXXX"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-11 pr-5 text-white placeholder-slate-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 sm:py-4 pl-11 pr-5 text-white placeholder-slate-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm"
                       />
                     </div>
                   </div>
                 )}
 
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <div className="relative">
                     <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <input 
@@ -183,7 +185,7 @@ export default function Login() {
                       placeholder="Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-11 pr-5 text-white placeholder-slate-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 sm:py-4 pl-11 pr-5 text-white placeholder-slate-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm"
                     />
                   </div>
                 </div>
@@ -191,7 +193,7 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold shadow-lg shadow-indigo-600/20 transition-all disabled:opacity-50 text-sm"
+                  className="w-full py-3.5 sm:py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold shadow-lg shadow-indigo-600/20 transition-all disabled:opacity-50 text-sm"
                 >
                   {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : (isRegistering ? 'Generate ID & Register' : 'Sign In')}
                 </button>
@@ -218,6 +220,16 @@ export default function Login() {
               <span className="text-[10px] uppercase tracking-tighter">End-to-End</span>
             </div>
           </div>
+
+          {isInstallable && (
+            <button
+              onClick={install}
+              className="w-full flex items-center justify-center space-x-2 py-3 bg-white/5 hover:bg-white/10 text-indigo-400 rounded-2xl text-xs font-medium transition-all border border-white/5"
+            >
+              <Download className="w-4 h-4" />
+              <span>Install Cipher App</span>
+            </button>
+          )}
         </div>
       </motion.div>
     </div>
