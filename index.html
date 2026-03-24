@@ -7,6 +7,15 @@
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#000000" />
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234f46e5'%3E%3Cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'/%3E%3C/svg%3E">
+    <script>
+      if (typeof window !== 'undefined' && typeof window.Notification === 'undefined') {
+        window.Notification = {
+          permission: 'denied',
+          requestPermission: function() { return Promise.resolve('denied'); },
+          maxActions: 0
+        };
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -33,6 +33,17 @@ export const generatePQCKeyPair = async () => {
   };
 };
 
+// Generate a human-readable safety number (fingerprint) from a public key
+export const getSafetyNumber = (publicKeyBase64: string): string => {
+  // Simple hash-like fingerprint: take first 32 chars of base64 and group them
+  const clean = publicKeyBase64.replace(/[^a-zA-Z0-9]/g, '').slice(0, 30);
+  const chunks = [];
+  for (let i = 0; i < clean.length; i += 5) {
+    chunks.push(clean.slice(i, i + 5));
+  }
+  return chunks.join('-');
+};
+
 // Encapsulate secret using recipient's public key
 export const encapsulateSecret = async (recipientPublicKeyBase64: string) => {
   const kem = new MlKem1024();

@@ -1,21 +1,29 @@
 {
-  "name": "Cipher PWA",
+  "name": "Cipher Secure Chat",
   "short_name": "Cipher",
-  "description": "Secure End-to-End Encrypted Chat",
+  "description": "Secure End-to-End Encrypted Chat with Post-Quantum Protection",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#F7F9FC",
+  "theme_color": "#1E3A5F",
   "icons": [
     {
-      "src": "https://picsum.photos/192",
+      "src": "https://picsum.photos/seed/cipher192/192",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "https://picsum.photos/512",
+      "src": "https://picsum.photos/seed/cipher512/512",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://picsum.photos/seed/ciphermaskable/192",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

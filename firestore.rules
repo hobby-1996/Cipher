@@ -25,6 +25,23 @@ service cloud.firestore {
     //   - ct: string (optional)
     //   - created_at: string (required, ISO 8601 date string)
     //
+    // Collection: games
+    // Document ID: {gameId}
+    // Fields:
+    //   - hostId: string (required)
+    //   - guestId: string (required)
+    //   - status: string (required)
+    //   - hostReady: boolean (required)
+    //   - guestReady: boolean (required)
+    //   - hostScore: number (required)
+    //   - guestScore: number (required)
+    //   - hostPaddle: number (required)
+    //   - guestPaddle: number (required)
+    //   - ball: map (required)
+    //   - countdown: number (required)
+    //   - winner: string | null (required)
+    //   - created_at: string (required)
+    //
     // ===============================================================
 
     // Helper Functions
@@ -44,7 +61,8 @@ service cloud.firestore {
              isValidEmail(data.email) &&
              (!('public_key' in data) || data.public_key is string) &&
              (!('last_active' in data) || data.last_active is string) &&
-             (!('created_at' in data) || data.created_at is string);
+             (!('created_at' in data) || data.created_at is string) &&
+             (!('isPremium' in data) || data.isPremium is bool);
     }
     function isValidMessage(data) {
       return data.keys().hasAll(['id', 'sender_id', 'receiver_id', 'content', 'created_at']) &&
@@ -53,6 +71,23 @@ service cloud.firestore {
              data.receiver_id is string &&
              data.content is string && data.content.size() < 100000 &&
              (!('ct' in data) || data.ct is string || data.ct == null) &&
+             (!('expires_at' in data) || data.expires_at is string || data.expires_at == null) &&
+             data.created_at is string;
+    }
+    function isValidGame(data) {
+      return data.keys().hasAll(['hostId', 'guestId', 'status', 'hostReady', 'guestReady', 'hostScore', 'guestScore', 'hostPaddle', 'guestPaddle', 'ball', 'countdown', 'winner', 'created_at']) &&
+             data.hostId is string &&
+             data.guestId is string &&
+             data.status in ['lobby', 'countdown', 'playing', 'finished'] &&
+             data.hostReady is bool &&
+             data.guestReady is bool &&
+             data.hostScore is number &&
+             data.guestScore is number &&
+             data.hostPaddle is number &&
+             data.guestPaddle is number &&
+             data.ball is map &&
+             data.countdown is number &&
+             (data.winner is string || data.winner == null) &&
              data.created_at is string;
     }
 
@@ -71,6 +106,13 @@ service cloud.firestore {
       // Anyone authenticated can create a message for anyone (Sealed Sender)
       allow create: if isAuthenticated() && isValidMessage(request.resource.data);
       allow update: if false; // Messages are immutable
+    }
+
+    match /games/{gameId} {
+      allow read: if isAuthenticated() && (resource.data.hostId == request.auth.uid || resource.data.guestId == request.auth.uid);
+      allow create: if isAuthenticated() && isValidGame(request.resource.data) && request.resource.data.hostId == request.auth.uid;
+      allow update: if isAuthenticated() && isValidGame(request.resource.data) && (resource.data.hostId == request.auth.uid || resource.data.guestId == request.auth.uid);
+      allow delete: if isAuthenticated() && (resource.data.hostId == request.auth.uid || resource.data.guestId == request.auth.uid);
     }
   }
 }
