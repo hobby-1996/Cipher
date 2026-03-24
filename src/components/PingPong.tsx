@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import { X, Trophy } from 'lucide-react';
 
 interface PingPongProps {
@@ -13,20 +13,57 @@ export default function PingPong({ gameId, userId, onClose }: PingPongProps) {
   const [gameState, setGameState] = useState<any>(null);
   const gameRef = doc(db, 'games', gameId);
   const containerRef = useRef<HTMLDivElement>(null);
+  const ballRef = useRef<HTMLDivElement>(null);
+  const hostPaddleRef = useRef<HTMLDivElement>(null);
+  const guestPaddleRef = useRef<HTMLDivElement>(null);
+  
   const requestRef = useRef<number>();
   const lastPaddleUpdate = useRef<number>(0);
   const lastBallUpdate = useRef<number>(0);
+  
+  // Local physics state to avoid React render lag
+  const localBall = useRef({ x: 50, y: 50, dx: 0, dy: 0 });
+  const targetBall = useRef({ x: 50, y: 50, dx: 0, dy: 0 });
+  const localHostPaddle = useRef(50);
+  const localGuestPaddle = useRef(50);
+
+  const currentUserId = auth.currentUser?.uid;
+  const isHost = gameState?.hostId === currentUserId;
 
   useEffect(() => {
     const unsubscribe = onSnapshot(gameRef, (doc) => {
       if (doc.exists()) {
-        setGameState(doc.data());
+        const data = doc.data();
+        setGameState(data);
+        
+        // Sync local physics with authoritative state
+        if (data.ball) {
+          if (data.hostId === currentUserId) {
+            // Host: Only sync back if the ball was reset (e.g., after a goal)
+            const isReset = Math.abs(data.ball.x - 50) < 0.1 && Math.abs(data.ball.y - 50) < 0.1;
+            if (isReset) {
+              localBall.current = { ...data.ball };
+            }
+          } else {
+            // Guest: Update target for interpolation and sync velocity for prediction
+            targetBall.current = { ...data.ball };
+            localBall.current.dx = data.ball.dx;
+            localBall.current.dy = data.ball.dy;
+            
+            // If we're way off, snap it (e.g., after a goal)
+            const dist = Math.sqrt(Math.pow(localBall.current.x - data.ball.x, 2) + Math.pow(localBall.current.y - data.ball.y, 2));
+            if (dist > 20) {
+              localBall.current.x = data.ball.x;
+              localBall.current.y = data.ball.y;
+            }
+          }
+        }
+        if (data.hostPaddle !== undefined) localHostPaddle.current = data.hostPaddle;
+        if (data.guestPaddle !== undefined) localGuestPaddle.current = data.guestPaddle;
       }
     });
     return () => unsubscribe();
-  }, [gameId]);
-
-  const isHost = gameState?.hostId === userId;
+  }, [gameId, currentUserId]);
 
   // Handle paddle movement
   const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
@@ -52,95 +89,133 @@ export default function PingPong({ gameId, userId, onClose }: PingPongProps) {
       });
       lastPaddleUpdate.current = now;
     }
+    
+    // Update local ref immediately for smoothness
+    if (isHost) localHostPaddle.current = x;
+    else localGuestPaddle.current = x;
   };
 
-  // Host game loop
+  // Unified animation loop for both Host and Guest
   useEffect(() => {
-    if (!isHost || gameState?.status !== 'playing') return;
+    if (gameState?.status !== 'playing') return;
 
     let lastTime = performance.now();
-    let currentBall = { ...gameState.ball };
 
-    const updatePhysics = (time: number) => {
-      const deltaTime = (time - lastTime) / 1000;
+    const loop = (time: number) => {
+      const deltaTime = Math.min((time - lastTime) / 1000, 0.1); // Cap delta to avoid huge jumps
       lastTime = time;
 
-      // Move ball
-      currentBall.x += currentBall.dx * deltaTime;
-      currentBall.y += currentBall.dy * deltaTime;
+      if (isHost) {
+        // HOST: Calculate physics
+        localBall.current.x += localBall.current.dx * deltaTime;
+        localBall.current.y += localBall.current.dy * deltaTime;
 
-      // Wall collisions
-      if (currentBall.x <= 2 || currentBall.x >= 98) {
-        currentBall.dx *= -1;
-        currentBall.x = Math.max(2, Math.min(98, currentBall.x));
-      }
-
-      // Paddle collisions
-      // Host paddle is at y=95
-      if (currentBall.y >= 93 && currentBall.y <= 97 && currentBall.dy > 0) {
-        if (Math.abs(currentBall.x - gameState.hostPaddle) <= 12) {
-          currentBall.dy *= -1.1; // Speed up slightly
-          currentBall.dx += (currentBall.x - gameState.hostPaddle) * 0.5; // Add spin
-          currentBall.y = 92;
+        // Wall collisions
+        if (localBall.current.x <= 2 || localBall.current.x >= 98) {
+          localBall.current.dx *= -1;
+          localBall.current.x = Math.max(2, Math.min(98, localBall.current.x));
         }
-      }
 
-      // Guest paddle is at y=5
-      if (currentBall.y <= 7 && currentBall.y >= 3 && currentBall.dy < 0) {
-        if (Math.abs(currentBall.x - gameState.guestPaddle) <= 12) {
-          currentBall.dy *= -1.1;
-          currentBall.dx += (currentBall.x - gameState.guestPaddle) * 0.5;
-          currentBall.y = 8;
+        // Paddle collisions
+        if (localBall.current.y >= 93 && localBall.current.y <= 97 && localBall.current.dy > 0) {
+          if (Math.abs(localBall.current.x - localHostPaddle.current) <= 12) {
+            localBall.current.dy *= -1.05; // Gentle speed up
+            localBall.current.dx += (localBall.current.x - localHostPaddle.current) * 0.8; // More spin
+            localBall.current.y = 92.9;
+          }
         }
-      }
 
-      // Scoring
-      let scored = false;
-      let newHostScore = gameState.hostScore;
-      let newGuestScore = gameState.guestScore;
+        if (localBall.current.y <= 7 && localBall.current.y >= 3 && localBall.current.dy < 0) {
+          if (Math.abs(localBall.current.x - localGuestPaddle.current) <= 12) {
+            localBall.current.dy *= -1.05;
+            localBall.current.dx += (localBall.current.x - localGuestPaddle.current) * 0.8;
+            localBall.current.y = 7.1;
+          }
+        }
 
-      if (currentBall.y > 100) {
-        newGuestScore += 1;
-        scored = true;
-      } else if (currentBall.y < 0) {
-        newHostScore += 1;
-        scored = true;
-      }
+        // Scoring
+        let scored = false;
+        let newHostScore = gameState.hostScore;
+        let newGuestScore = gameState.guestScore;
 
-      if (scored) {
-        if (newHostScore >= 5 || newGuestScore >= 5) {
-          updateDoc(gameRef, {
-            status: 'finished',
-            hostScore: newHostScore,
-            guestScore: newGuestScore,
-            winner: newHostScore >= 5 ? gameState.hostId : gameState.guestId
-          });
-          return;
+        if (localBall.current.y > 110) {
+          newGuestScore += 1;
+          scored = true;
+        } else if (localBall.current.y < -10) {
+          newHostScore += 1;
+          scored = true;
+        }
+
+        if (scored) {
+          if (newHostScore >= 5 || newGuestScore >= 5) {
+            updateDoc(gameRef, {
+              status: 'finished',
+              hostScore: newHostScore,
+              guestScore: newGuestScore,
+              winner: newHostScore >= 5 ? gameState.hostId : gameState.guestId
+            });
+            return;
+          } else {
+            localBall.current = { x: 50, y: 50, dx: (Math.random() > 0.5 ? 40 : -40), dy: (localBall.current.y > 100 ? -50 : 50) };
+            updateDoc(gameRef, {
+              hostScore: newHostScore,
+              guestScore: newGuestScore,
+              ball: localBall.current
+            });
+          }
         } else {
-          currentBall = { x: 50, y: 50, dx: (Math.random() > 0.5 ? 30 : -30), dy: (currentBall.y > 100 ? -40 : 40) };
-          updateDoc(gameRef, {
-            hostScore: newHostScore,
-            guestScore: newGuestScore,
-            ball: currentBall
-          });
+          // Sync ball position periodically to Firestore
+          const now = Date.now();
+          if (now - lastBallUpdate.current > 70) {
+            updateDoc(gameRef, { ball: localBall.current });
+            lastBallUpdate.current = now;
+          }
         }
       } else {
-        // Sync ball position periodically
-        const now = Date.now();
-        if (now - lastBallUpdate.current > 50) {
-          updateDoc(gameRef, { ball: currentBall });
-          lastBallUpdate.current = now;
+        // GUEST: Predict ball movement
+        localBall.current.x += localBall.current.dx * deltaTime;
+        localBall.current.y += localBall.current.dy * deltaTime;
+        
+        // Interpolate towards target to correct drift smoothly
+        // This is the "secret sauce" for ultra-smooth movement
+        localBall.current.x += (targetBall.current.x - localBall.current.x) * 0.15;
+        localBall.current.y += (targetBall.current.y - localBall.current.y) * 0.15;
+        
+        // Simple wall bounce prediction
+        if (localBall.current.x <= 2 || localBall.current.x >= 98) {
+          localBall.current.dx *= -1;
+          localBall.current.x = Math.max(2, Math.min(98, localBall.current.x));
         }
       }
 
-      requestRef.current = requestAnimationFrame(updatePhysics);
+      // Update DOM directly with translate3d for GPU acceleration
+      if (ballRef.current && containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const ballX = (localBall.current.x / 100) * rect.width;
+        const ballY = ((isHost ? localBall.current.y : 100 - localBall.current.y) / 100) * rect.height;
+        ballRef.current.style.transform = `translate3d(${ballX}px, ${ballY}px, 0) translate(-50%, -50%)`;
+      }
+      
+      if (hostPaddleRef.current && containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const paddleX = (localHostPaddle.current / 100) * rect.width;
+        hostPaddleRef.current.style.transform = `translate3d(${paddleX}px, 0, 0) translate(-50%, 0)`;
+      }
+      
+      if (guestPaddleRef.current && containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const paddleX = (localGuestPaddle.current / 100) * rect.width;
+        guestPaddleRef.current.style.transform = `translate3d(${paddleX}px, 0, 0) translate(-50%, 0)`;
+      }
+
+      requestRef.current = requestAnimationFrame(loop);
     };
 
-    requestRef.current = requestAnimationFrame(updatePhysics);
+    requestRef.current = requestAnimationFrame(loop);
     return () => {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [isHost, gameState?.status, gameState?.hostPaddle, gameState?.guestPaddle, gameState?.hostScore, gameState?.guestScore]);
+  }, [isHost, gameState?.status, gameState?.hostScore, gameState?.guestScore]);
 
   // Countdown logic
   useEffect(() => {
@@ -255,31 +330,36 @@ export default function PingPong({ gameId, userId, onClose }: PingPongProps) {
           {/* Game Elements */}
           {/* Opponent Paddle (Top) */}
           <div 
-            className="absolute top-[5%] h-2 bg-error-red rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]"
+            ref={isHost ? guestPaddleRef : hostPaddleRef}
+            className="absolute top-[5%] h-2 bg-error-red rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)] will-change-transform"
             style={{ 
               width: '20%', 
-              left: `${isHost ? gameState.guestPaddle : gameState.hostPaddle}%`,
-              transform: 'translateX(-50%)'
+              left: 0,
+              top: '5%',
+              transform: `translate3d(${(isHost ? localGuestPaddle.current : localHostPaddle.current) / 100 * (containerRef.current?.clientWidth || 0)}px, 0, 0) translate(-50%, 0)`
             }}
           />
 
           {/* My Paddle (Bottom) */}
           <div 
-            className="absolute bottom-[5%] h-2 bg-accent-teal rounded-full shadow-[0_0_10px_rgba(62,198,193,0.5)]"
+            ref={isHost ? hostPaddleRef : guestPaddleRef}
+            className="absolute bottom-[5%] h-2 bg-accent-teal rounded-full shadow-[0_0_10px_rgba(62,198,193,0.5)] will-change-transform"
             style={{ 
               width: '20%', 
-              left: `${isHost ? gameState.hostPaddle : gameState.guestPaddle}%`,
-              transform: 'translateX(-50%)'
+              left: 0,
+              bottom: '5%',
+              transform: `translate3d(${(isHost ? localHostPaddle.current : localGuestPaddle.current) / 100 * (containerRef.current?.clientWidth || 0)}px, 0, 0) translate(-50%, 0)`
             }}
           />
 
           {/* Ball */}
           <div 
-            className="absolute w-4 h-4 bg-white rounded-full shadow-[0_0_15px_rgba(255,255,255,0.8)]"
+            ref={ballRef}
+            className="absolute w-4 h-4 bg-white rounded-full shadow-[0_0_15px_rgba(255,255,255,0.8)] will-change-transform"
             style={{
-              left: `${gameState.ball.x}%`,
-              top: `${isHost ? gameState.ball.y : 100 - gameState.ball.y}%`,
-              transform: 'translate(-50%, -50%)'
+              left: 0,
+              top: 0,
+              transform: `translate3d(${localBall.current.x / 100 * (containerRef.current?.clientWidth || 0)}px, ${(isHost ? localBall.current.y : 100 - localBall.current.y) / 100 * (containerRef.current?.clientHeight || 0)}px, 0) translate(-50%, -50%)`
             }}
           />
         </div>
